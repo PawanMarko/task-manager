@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task List</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0e0e0e;
+        --surface: #161616;
+        --border: #2a2a2a;
+        --accent: #c8f060;
+        --accent-dim: #9ab840;
+        --text: #f0ede6;
+        --muted: #666;
+        --done: #1a1a1a;
+        --done-text: #555;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "DM Mono", monospace;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60px 20px 80px;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 600px;
+        position: relative;
+        z-index: 1;
+      }
+
+      header {
+        margin-bottom: 40px;
+      }
+
+      .label {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+      }
+
+      h1 {
+        font-family: "Playfair Display", serif;
+        font-size: clamp(36px, 7vw, 56px);
+        line-height: 1.05;
+        color: var(--text);
+      }
+
+      h1 span {
+        color: var(--accent);
+      }
+
+      .divider {
+        height: 1px;
+        background: linear-gradient(90deg, var(--accent) 0%, transparent 70%);
+        margin: 24px 0 32px;
+      }
+
+      .stats {
+        display: flex;
+        gap: 32px;
+        margin-bottom: 36px;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+      }
+
+      .stats strong {
+        display: block;
+        font-size: 22px;
+        font-family: "Playfair Display", serif;
+        color: var(--text);
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+
+      /* Add form */
+      .add-form {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 32px;
+      }
+
+      .add-form input {
+        flex: 1;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        padding: 12px 16px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .add-form input::placeholder {
+        color: var(--muted);
+      }
+      .add-form input:focus {
+        border-color: var(--accent);
+      }
+
+      .add-form button {
+        background: var(--accent);
+        border: none;
+        border-radius: 6px;
+        color: #0e0e0e;
+        cursor: pointer;
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 12px 20px;
+        transition:
+          background 0.2s,
+          transform 0.1s;
+        white-space: nowrap;
+      }
+
+      .add-form button:hover {
+        background: var(--accent-dim);
+      }
+      .add-form button:active {
+        transform: scale(0.97);
+      }
+
+      /* Task list */
+      .task-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .task-item {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        transition: border-color 0.2s;
+        animation: slideIn 0.3s ease both;
+      }
+
+      .task-item:hover {
+        border-color: #3a3a3a;
+      }
+
+      .task-item.done {
+        background: var(--done);
+        border-color: #1e1e1e;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Toggle button styled as checkbox */
+      .toggle-btn {
+        background: none;
+        border: 1.5px solid var(--muted);
+        border-radius: 4px;
+        cursor: pointer;
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+      }
+
+      .toggle-btn:hover {
+        border-color: var(--accent);
+      }
+
+      .task-item.done .toggle-btn {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+
+      .checkmark {
+        display: none;
+        width: 11px;
+        height: 11px;
+      }
+      .task-item.done .checkmark {
+        display: block;
+      }
+
+      .task-title {
+        font-size: 14px;
+        letter-spacing: 0.02em;
+        flex: 1;
+        line-height: 1.5;
+      }
+
+      .task-item.done .task-title {
+        color: var(--done-text);
+        text-decoration: line-through;
+        text-decoration-color: #3a3a3a;
+      }
+
+      .task-id {
+        font-size: 11px;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+
+      .delete-btn {
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 15px;
+        padding: 2px 5px;
+        border-radius: 3px;
+        transition:
+          color 0.2s,
+          background 0.2s;
+        flex-shrink: 0;
+        line-height: 1;
+      }
+
+      .delete-btn:hover {
+        color: #ff6b6b;
+        background: rgba(255, 107, 107, 0.08);
+      }
+
+      .empty {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--muted);
+        font-size: 13px;
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+      }
+
+      .empty-icon {
+        font-size: 36px;
+        display: block;
+        margin-bottom: 12px;
+        opacity: 0.4;
+      }
+
+      footer {
+        margin-top: 48px;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        text-align: center;
+      }
+      /* add this to your CSS */
+      .edit-btn {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 15px;
+        flex-shrink: 0;
+        padding: 2px 5px;
+        border-radius: 3px;
+        transition: color 0.2s;
+      }
+      .edit-btn:hover {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <p class="label">// task manager</p>
+        <h1>My <span>Tasks</span></h1>
+      </header>
+
+      <div class="divider"></div>
+
+      <div class="stats">
+        <div>
+          <strong>{{ tasks | length }}</strong>
+          total
+        </div>
+        <div>
+          <strong>{{ tasks | selectattr('completed') | list | length }}</strong>
+          done
+        </div>
+        <div>
+          <strong>{{ tasks | rejectattr('completed') | list | length }}</strong>
+          pending
+        </div>
+      </div>
+
+      <!-- ADD TASK -->
+      <form class="add-form" action="/add" method="POST">
+        <input
+          type="text"
+          name="title"
+          placeholder="New task..."
+          autocomplete="off"
+          required
+        />
+
+        <button type="submit">+ Add Task</button>
+      </form>
+      <!-- Search Form Container -->
+      <!-- replace the whole search-container div with this -->
+      <form class="add-form" action="/" method="GET" style="margin-bottom: 16px;">
+        <input
+          name="q"
+          value="{{ search_query }}"
+          placeholder="Search tasks..."
+          autocomplete="off"
+        />
+        <input name="filter" type="hidden" value="{{ current_filter }}" />
+        <button type="submit">🔍 Search</button>
+      </form>
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            style="
+              padding: 10px 20px;
+              background-color: teal;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            🔍 Search
+          </button>
+        </form>
+      </div>
+
+      <!-- TASK LIST -->
+      {% if tasks %}
+      <ul class="task-list">
+        {% for task in tasks %}
+        <li class="task-item {% if task.completed %}done{% endif %}">
+          <a href="/edit/{{ task.id }}" class="edit-btn">✎</a>
+          <!-- TOGGLE COMPLETE -->
+          <form
+            action="/complete/{{ task.id }}"
+            method="POST"
+            style="display: contents"
+          >
+            <button class="toggle-btn" type="submit" title="Toggle complete">
+              <svg
+                class="checkmark"
+                viewBox="0 0 12 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M2 6l3 3 5-5"
+                  stroke="#0e0e0e"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </form>
+
+          <span class="task-title">{{ task.title }}</span>
+          <span class="task-id">#{{ task.id }}</span>
+
+          <!-- DELETE -->
+          <form
+            action="/delete/{{ task.id }}"
+            method="POST"
+            style="display: contents"
+          >
+            <button class="delete-btn" type="submit" title="Delete">✕</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="empty">
+        <span class="empty-icon">○</span>
+        No tasks yet. Type one above.
+      </div>
+      {% endif %}
+
+      <footer><p>Flask + SQLAlchemy</p></footer>
+    </div>
+  </body>
+</html>
